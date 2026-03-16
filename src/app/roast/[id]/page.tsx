@@ -1,6 +1,22 @@
+import type { Metadata } from "next";
+import type { BundledLanguage } from "shiki";
+import { codeToHtml } from "shiki";
+
 import { Badge } from "@/components/ui/badge";
 import { DiffLine } from "@/components/ui/diff-line";
 import { ScoreRing } from "@/components/ui/score-ring";
+
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  return {
+    title: "Roast Result | devroast",
+    description: `AI-powered code review result for roast ${id}. See your score, detailed analysis and suggested fixes.`,
+  };
+}
 
 const roastData = {
   score: 3.5,
@@ -9,24 +25,22 @@ const roastData = {
     '"this code looks like it was written during a power outage... in 2005."',
   language: "javascript",
   lines: 7,
-  code: [
-    "function calculateTotal(items) {",
-    "  var total = 0;",
-    "  for (var i = 0; i < items.length; i++) {",
-    "    total = total + items[i].price;",
-    "  }",
-    " ",
-    "  function applyDiscount(total, discount) {",
-    "    var result = total - (total * discount);",
-    "    return result;",
-    "  }",
-    " ",
-    "  // TODO: handle tax calculation",
-    "  // TODO: handle currency conversion",
-    " ",
-    "  return total;",
-    "}",
-  ],
+  code: `function calculateTotal(items) {
+  var total = 0;
+  for (var i = 0; i < items.length; i++) {
+    total = total + items[i].price;
+  }
+
+  if (total > 100) {
+    console.log("discount applied");
+    total = total * 0.9;
+  }
+
+  // TODO: handle tax calculation
+  // TODO: handle currency conversion
+
+  return total;
+}`,
   issues: [
     {
       variant: "critical" as const,
@@ -89,12 +103,19 @@ function getVerdictVariant(
   return "good";
 }
 
-export default function RoastPage() {
+export default async function RoastResultPage({ params }: Props) {
+  const { id: _id } = await params;
   const data = roastData;
   const verdictVariant = getVerdictVariant(data.score);
+  const codeLines = data.code.split("\n");
+
+  const codeHtml = await codeToHtml(data.code, {
+    lang: data.language as BundledLanguage,
+    theme: "vesper",
+  });
 
   return (
-    <main className="mx-auto max-w-5xl px-10 py-10">
+    <main className="mx-auto max-w-5xl px-20 py-10">
       <div className="flex flex-col gap-10">
         {/* Score Hero */}
         <section className="flex items-center gap-12">
@@ -103,7 +124,7 @@ export default function RoastPage() {
           <div className="flex flex-1 flex-col gap-4">
             <Badge variant={verdictVariant}>{`verdict: ${data.verdict}`}</Badge>
 
-            <p className="text-xl leading-relaxed text-text-primary">
+            <p className="font-mono text-xl leading-[1.5] text-text-primary">
               {data.quote}
             </p>
 
@@ -142,31 +163,23 @@ export default function RoastPage() {
             <div className="flex">
               {/* Line Numbers */}
               <div className="flex w-12 shrink-0 flex-col items-end gap-2 border-r border-border-primary bg-bg-surface px-3 py-4">
-                {data.code.map((_line, i) => (
-                  <span
-                    key={`ln-${_line}-${i.toString()}`}
-                    className="font-mono text-xs text-text-tertiary"
-                  >
-                    {i + 1}
-                  </span>
-                ))}
+                {Array.from({ length: codeLines.length }, (_, i) => i + 1).map(
+                  (n) => (
+                    <span
+                      key={n}
+                      className="font-mono text-xs text-text-tertiary"
+                    >
+                      {n}
+                    </span>
+                  ),
+                )}
               </div>
 
-              {/* Code */}
-              <div className="flex flex-col gap-2 p-4">
-                {data.code.map((line, i) => (
-                  <span
-                    key={`code-${line}-${i.toString()}`}
-                    className={`font-mono text-xs ${
-                      line.trimStart().startsWith("//")
-                        ? "text-syn-comment"
-                        : "text-syn-operator"
-                    }`}
-                  >
-                    {line}
-                  </span>
-                ))}
-              </div>
+              {/* Code with Shiki highlight */}
+              <div
+                className="flex-1 overflow-hidden p-4 font-mono text-xs [&>pre]:!bg-transparent [&_code]:font-mono [&_code_.line]:block [&_code_.line]:leading-loose"
+                dangerouslySetInnerHTML={{ __html: codeHtml }}
+              />
             </div>
           </div>
         </section>
@@ -195,7 +208,7 @@ export default function RoastPage() {
                 <span className="font-mono text-[13px] font-medium text-text-primary">
                   {issue.title}
                 </span>
-                <p className="text-xs leading-relaxed text-text-secondary">
+                <p className="font-mono text-xs leading-relaxed text-text-secondary">
                   {issue.description}
                 </p>
               </div>
@@ -227,9 +240,9 @@ export default function RoastPage() {
 
             {/* Diff Body */}
             <div className="flex flex-col py-1">
-              {data.diff.lines.map((line, i) => (
+              {data.diff.lines.map((line) => (
                 <DiffLine
-                  key={`diff-${line.code}-${i.toString()}`}
+                  key={`${line.type}:${line.code}`}
                   type={line.type}
                 >
                   {line.code}
