@@ -40,7 +40,7 @@
       "includes": [
         "**/components/ui/code-block.tsx",
         "**/app/leaderboard/page.tsx",
-        "**/app/roast/[id]/page.tsx"
+        "**/app/roast/\\[id\\]/page.tsx"
       ],
       "linter": {
         "rules": {

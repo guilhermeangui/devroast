@@ -127,11 +127,7 @@
     "public.issue_severity": {
       "name": "issue_severity",
       "schema": "public",
-      "values": [
-        "critical",
-        "warning",
-        "good"
-      ]
+      "values": ["critical", "warning", "good"]
     },
     "public.language": {
       "name": "language",

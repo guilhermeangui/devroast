@@ -241,10 +241,7 @@ export default async function RoastResultPage({ params }: Props) {
             {/* Diff Body */}
             <div className="flex flex-col py-1">
               {data.diff.lines.map((line) => (
-                <DiffLine
-                  key={`${line.type}:${line.code}`}
-                  type={line.type}
-                >
+                <DiffLine key={`${line.type}:${line.code}`} type={line.type}>
                   {line.code}
                 </DiffLine>
               ))}
