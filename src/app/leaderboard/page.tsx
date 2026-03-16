@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import type { BundledLanguage } from "shiki";
 import { codeToHtml } from "shiki";
+
+export const metadata: Metadata = {
+  title: "Shame Leaderboard | devroast",
+  description:
+    "The most roasted code on the internet. See which code snippets got the worst scores from our AI-powered code roaster.",
+};
 
 const leaderboardEntries = [
   {
@@ -91,12 +98,12 @@ async function LeaderboardEntry({
       <div className="flex h-[120px] overflow-hidden bg-bg-input">
         {/* Line Numbers */}
         <div className="flex w-10 shrink-0 flex-col items-end gap-1.5 border-r border-border-primary bg-bg-surface px-2.5 py-3.5">
-          {lines.map((line, i) => (
+          {Array.from({ length: lines.length }, (_, i) => i + 1).map((n) => (
             <span
-              key={`${line}-${i.toString()}`}
+              key={n}
               className="font-mono text-xs leading-tight text-text-tertiary"
             >
-              {i + 1}
+              {n}
             </span>
           ))}
         </div>
@@ -121,12 +128,12 @@ export default async function LeaderboardPage() {
             <span className="font-mono text-[32px] font-bold text-accent-green">
               {">"}
             </span>
-            <span className="font-mono text-[28px] font-bold text-text-primary">
+            <h1 className="font-mono text-[28px] font-bold text-text-primary">
               shame_leaderboard
-            </span>
+            </h1>
           </div>
 
-          <p className="text-sm text-text-secondary">
+          <p className="font-mono text-sm text-text-secondary">
             {"// the most roasted code on the internet"}
           </p>
 
