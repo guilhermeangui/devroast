@@ -28,4 +28,14 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
+
+  --color-syn-keyword: #a0a0a0;
+  --color-syn-function: #ffc799;
+  --color-syn-string: #99ffe4;
+  --color-syn-variable: #ffffff;
+  --color-syn-operator: #a0a0a0;
+  --color-syn-number: #ffc799;
+  --color-syn-property: #a0a0a0;
+  --color-syn-type: #ffc799;
+  --color-syn-comment: #8b8b8b;
 }

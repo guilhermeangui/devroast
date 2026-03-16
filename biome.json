@@ -37,7 +37,10 @@
   },
   "overrides": [
     {
-      "includes": ["**/components/ui/code-block.tsx"],
+      "includes": [
+        "**/components/ui/code-block.tsx",
+        "**/app/leaderboard/page.tsx"
+      ],
       "linter": {
         "rules": {
           "security": {
