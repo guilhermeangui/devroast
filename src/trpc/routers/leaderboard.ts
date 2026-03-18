@@ -33,6 +33,17 @@ export const leaderboardRouter = createTRPCRouter({
     };
   }),
 
+  getLeaderboardStats: baseProcedure.query(async ({ ctx }) => {
+    const result = await ctx.db
+      .select({ totalRoasts: count(), avgScore: avg(roasts.score) })
+      .from(roasts);
+
+    return {
+      totalRoasts: result[0]?.totalRoasts ?? 0,
+      avgScore: Number(result[0]?.avgScore ?? 0),
+    };
+  }),
+
   getTop20: baseProcedure.query(async ({ ctx }) => {
     const [top20, statsResult] = await Promise.all([
       ctx.db

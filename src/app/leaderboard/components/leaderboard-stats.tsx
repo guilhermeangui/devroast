@@ -6,7 +6,9 @@ import { useTRPC } from "@/trpc/client";
 
 export function LeaderboardStats() {
   const trpc = useTRPC();
-  const { data } = useQuery(trpc.leaderboard.getTop20.queryOptions());
+  const { data } = useQuery(
+    trpc.leaderboard.getLeaderboardStats.queryOptions(),
+  );
 
   return (
     <div className="flex items-center gap-2 font-mono text-xs text-text-tertiary">

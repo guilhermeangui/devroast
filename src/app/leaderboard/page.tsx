@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default function LeaderboardPage() {
-  prefetch(trpc.leaderboard.getTop20.queryOptions());
+  prefetch(trpc.leaderboard.getLeaderboardStats.queryOptions());
 
   return (
     <HydrateClient>
