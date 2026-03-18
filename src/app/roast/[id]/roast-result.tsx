@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import type { BundledLanguage } from "shiki";
 import { codeToHtml } from "shiki";
 
@@ -33,6 +34,7 @@ function getVerdictVariant(
 }
 
 async function RoastResult({ id }: Props) {
+  await connection();
   const data = await caller.roast.getById({ id });
   if (!data) notFound();
 
