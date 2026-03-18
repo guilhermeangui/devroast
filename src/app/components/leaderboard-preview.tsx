@@ -1,38 +1,49 @@
-"use client";
-
-import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useTRPC } from "@/trpc/client";
+import type { BundledLanguage } from "shiki";
+import { codeToHtml } from "shiki";
+import { caller } from "@/trpc/server";
+import { LeaderboardRow } from "./leaderboard-row";
 
-function getScoreColor(score: number): string {
-  if (score <= 3.5) return "text-accent-red";
-  if (score <= 6.5) return "text-accent-amber";
-  return "text-accent-green";
-}
+// Mapeia os valores do enum do banco para os identificadores do Shiki
+const SHIKI_LANG: Record<string, BundledLanguage> = {
+  javascript: "javascript",
+  typescript: "typescript",
+  python: "python",
+  rust: "rust",
+  go: "go",
+  java: "java",
+  c: "c",
+  cpp: "cpp",
+  csharp: "csharp",
+  php: "php",
+  ruby: "ruby",
+  swift: "swift",
+  kotlin: "kotlin",
+  sql: "sql",
+  shell: "bash",
+  other: "typescript", // fallback razoável
+};
 
-function getCodeLines(code: string): string[] {
-  return code.split("\n").slice(0, 3);
-}
+export async function LeaderboardPreview() {
+  const { entries, totalRoasts } = await caller.leaderboard.getTop3();
 
-function isCommentLine(line: string): boolean {
-  const trimmed = line.trimStart();
-  return (
-    trimmed.startsWith("//") ||
-    trimmed.startsWith("--") ||
-    trimmed.startsWith("#")
+  const rows = await Promise.all(
+    entries.map(async (entry) => {
+      const lang = SHIKI_LANG[entry.language] ?? "typescript";
+      const highlightedHtml = await codeToHtml(entry.code, {
+        lang,
+        theme: "vesper",
+      });
+      return { ...entry, highlightedHtml };
+    }),
   );
-}
-
-export function LeaderboardPreview() {
-  const trpc = useTRPC();
-  const { data } = useSuspenseQuery(trpc.leaderboard.getTop3.queryOptions());
 
   return (
     <>
       {/* Table */}
       <div className="overflow-hidden border border-border-primary">
         {/* Table Header */}
-        <div className="flex items-center bg-bg-surface px-5 py-3 border-b border-border-primary">
+        <div className="flex items-center border-b border-border-primary bg-bg-surface px-5 py-3">
           <span className="w-[50px] shrink-0 font-mono text-xs font-medium text-text-tertiary">
             #
           </span>
@@ -42,49 +53,28 @@ export function LeaderboardPreview() {
           <span className="flex-1 font-mono text-xs font-medium text-text-tertiary">
             code
           </span>
-          <span className="w-[100px] shrink-0 font-mono text-xs font-medium text-text-tertiary">
+          <span className="w-[100px] shrink-0 pl-4 font-mono text-xs font-medium text-text-tertiary">
             lang
           </span>
         </div>
 
         {/* Rows */}
-        {data.entries.map((entry) => (
-          <Link
-            key={entry.id}
-            href={`/roast/${entry.id}`}
-            className="flex border-b border-border-primary px-5 py-4 last:border-b-0 transition-colors hover:bg-bg-elevated"
-          >
-            <span
-              className={`w-[50px] shrink-0 font-mono text-xs ${entry.rank === 1 ? "text-accent-amber" : "text-text-secondary"}`}
-            >
-              {entry.rank}
-            </span>
-            <span
-              className={`w-[70px] shrink-0 font-mono text-xs font-bold ${getScoreColor(entry.score)}`}
-            >
-              {entry.score.toFixed(1)}
-            </span>
-            <div className="flex flex-1 flex-col gap-0.5">
-              {getCodeLines(entry.code).map((line, i) => (
-                <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: linha de código sem id único
-                  key={i}
-                  className={`font-mono text-xs ${isCommentLine(line) ? "text-text-tertiary" : "text-text-primary"}`}
-                >
-                  {line}
-                </span>
-              ))}
-            </div>
-            <span className="w-[100px] shrink-0 font-mono text-xs text-text-secondary">
-              {entry.language}
-            </span>
-          </Link>
+        {rows.map((row) => (
+          <LeaderboardRow
+            key={row.id}
+            id={row.id}
+            rank={row.rank}
+            score={row.score}
+            language={row.language}
+            lineCount={row.lineCount}
+            highlightedHtml={row.highlightedHtml}
+          />
         ))}
       </div>
 
       {/* Footer Hint */}
       <p className="text-center font-mono text-xs text-text-tertiary">
-        showing top 3 of {data.totalRoasts.toLocaleString("en-US")}
+        showing top 3 of {totalRoasts.toLocaleString("en-US")}
         {" · "}
         <Link
           href="/leaderboard"

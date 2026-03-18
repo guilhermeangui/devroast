@@ -7,7 +7,6 @@ import { ActionsBar, CodeEditor } from "./home-client";
 
 export default function Home() {
   prefetch(trpc.stats.getStats.queryOptions());
-  prefetch(trpc.leaderboard.getTop3.queryOptions());
 
   return (
     <HydrateClient>
