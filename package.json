@@ -17,12 +17,14 @@
     "db:down": "docker compose down"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
     "@base-ui/react": "^1.3.0",
     "@number-flow/react": "^0.6.0",
     "@tanstack/react-query": "^5.90.21",
     "@trpc/client": "^11.13.4",
     "@trpc/server": "^11.13.4",
     "@trpc/tanstack-react-query": "^11.13.4",
+    "ai": "^6.0.116",
     "client-only": "^0.0.1",
     "drizzle-orm": "^0.45.1",
     "highlight.js": "^11.11.1",
