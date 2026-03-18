@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { HomeStats } from "./components/home-stats";
 import { LeaderboardPreview } from "./components/leaderboard-preview";
 import { LeaderboardPreviewSkeleton } from "./components/leaderboard-preview-skeleton";
-import { ActionsBar, CodeEditor } from "./home-client";
+import { SubmitForm } from "./home-client";
 
 export default function Home() {
   return (
@@ -25,11 +25,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Code Editor */}
-          <CodeEditor />
-
-          {/* Actions Bar */}
-          <ActionsBar />
+          <SubmitForm />
 
           {/* Footer Stats */}
           <HomeStats />
