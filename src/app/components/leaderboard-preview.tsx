@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 import type { BundledLanguage } from "shiki";
 import { codeToHtml } from "shiki";
@@ -25,6 +26,9 @@ const SHIKI_LANG: Record<string, BundledLanguage> = {
 };
 
 export async function LeaderboardPreview() {
+  "use cache";
+  cacheLife("hours");
+
   const { entries, totalRoasts } = await caller.leaderboard.getTop3();
 
   const rows = await Promise.all(

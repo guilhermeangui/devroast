@@ -1,15 +1,12 @@
 import { Suspense } from "react";
-import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { HomeStats } from "./components/home-stats";
 import { LeaderboardPreview } from "./components/leaderboard-preview";
 import { LeaderboardPreviewSkeleton } from "./components/leaderboard-preview-skeleton";
 import { ActionsBar, CodeEditor } from "./home-client";
 
 export default function Home() {
-  prefetch(trpc.stats.getStats.queryOptions());
-
   return (
-    <HydrateClient>
+    <>
       <main>
         {/* Hero + Code Editor */}
         <section className="mx-auto flex max-w-5xl flex-col items-center gap-8 px-10 pt-20">
@@ -67,6 +64,6 @@ export default function Home() {
           </Suspense>
         </section>
       </main>
-    </HydrateClient>
+    </>
   );
 }
