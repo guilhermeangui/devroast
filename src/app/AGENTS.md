@@ -74,6 +74,51 @@ export function StatsCounter() {
 
 Use `useQuery` (not `useSuspenseQuery`) so the component renders immediately without suspending. Provide `?? 0` (or another appropriate default) for the initial render. No `<Suspense>` or skeleton needed.
 
+## Skeleton Components
+
+Skeletons live alongside their real counterpart in `src/app/components/`, suffixed with `-skeleton`:
+
+```
+components/
+  leaderboard-preview.tsx          # real component ("use client", useSuspenseQuery)
+  leaderboard-preview-skeleton.tsx # skeleton (no directives, pure JSX)
+```
+
+Rules:
+- **No `"use client"` directive** — skeletons are pure JSX with no hooks, safe to render in Server Components.
+- **Replicate the exact structure** of the real component (same column widths, padding, borders) so the layout does not shift when data arrives.
+- Use `animate-pulse` on each row wrapper. Apply it at the row level, not the individual block, so the entire row pulses together.
+- Use `bg-bg-elevated` for placeholder blocks — matches the surface palette without hardcoding colors.
+- Keep the real table header (with actual text labels) in the skeleton so column widths are anchored during loading.
+
+```tsx
+// leaderboard-preview-skeleton.tsx
+export function LeaderboardPreviewSkeleton() {
+  return (
+    <>
+      <div className="overflow-hidden border border-border-primary">
+        {/* Real header — anchors column widths */}
+        <div className="flex items-center bg-bg-surface px-5 py-3 border-b border-border-primary">
+          <span className="w-[50px] shrink-0 font-mono text-xs font-medium text-text-tertiary">#</span>
+          {/* … */}
+        </div>
+
+        {[1, 2, 3].map((rank) => (
+          <div key={rank} className="flex items-start border-b border-border-primary px-5 py-4 last:border-b-0 animate-pulse">
+            <div className="w-[50px] shrink-0"><div className="h-3 w-3 rounded-sm bg-bg-elevated" /></div>
+            {/* … */}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-center animate-pulse">
+        <div className="h-3 w-64 rounded-sm bg-bg-elevated" />
+      </div>
+    </>
+  );
+}
+```
+
 ## Animated Numbers
 
 Use `@number-flow/react` (`<NumberFlow>`) for any counter or metric that should animate when its value changes.
