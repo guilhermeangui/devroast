@@ -17,9 +17,11 @@ function getScoreColor(score: number): string {
   return "text-accent-green";
 }
 
-const COLLAPSE_THRESHOLD = 4;
 const LINE_HEIGHT_PX = 20; // deve bater com [&_code_.line]:leading-5 (1.25rem = 20px)
 const CODE_PADDING_Y_PX = 14; // py-3.5 = 14px
+// Altura suficiente para caber até 5 linhas (5 × 20 + 28 = 128) sem colapso desnecessário.
+// Colapso só aparece quando expandedHeight > COLLAPSED_HEIGHT, ou seja, a partir de 6 linhas.
+const COLLAPSED_HEIGHT = 130;
 
 function computeExpandedHeight(lineCount: number): number {
   return lineCount * LINE_HEIGHT_PX + CODE_PADDING_Y_PX * 2;
@@ -32,11 +34,11 @@ export function LeaderboardEntryCard({
   lineCount,
   highlightedHtml,
 }: LeaderboardEntryCardProps) {
-  const needsCollapsible = lineCount > COLLAPSE_THRESHOLD;
+  const expandedHeight = computeExpandedHeight(lineCount);
+  const needsCollapsible = expandedHeight > COLLAPSED_HEIGHT;
   const [expanded, setExpanded] = useState(false);
 
-  const collapsedHeight = 120;
-  const expandedHeight = computeExpandedHeight(lineCount);
+  const collapsedHeight = COLLAPSED_HEIGHT;
   const currentHeight =
     needsCollapsible && !expanded ? collapsedHeight : expandedHeight;
 

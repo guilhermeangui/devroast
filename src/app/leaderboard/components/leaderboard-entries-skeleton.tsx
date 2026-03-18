@@ -19,7 +19,7 @@ export function LeaderboardEntriesSkeleton() {
           </div>
 
           {/* Code block skeleton */}
-          <div className="flex h-[120px] bg-bg-input">
+          <div className="flex h-[130px] bg-bg-input">
             <div className="w-10 shrink-0 border-r border-border-primary bg-bg-surface" />
             <div className="flex-1 p-3.5">
               <div className="flex flex-col gap-2">
