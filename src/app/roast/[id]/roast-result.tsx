@@ -1,12 +1,13 @@
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 import type { BundledLanguage } from "shiki";
 import { codeToHtml } from "shiki";
 
 import { Badge } from "@/components/ui/badge";
 import { DiffLine } from "@/components/ui/diff-line";
 import { ScoreRing } from "@/components/ui/score-ring";
-import { caller } from "@/trpc/server";
+import { db } from "@/db";
+import { roasts } from "@/db/schema";
 
 function parseDiff(raw: string) {
   return raw.split("\n").map((line) => {
@@ -34,8 +35,8 @@ function getVerdictVariant(
 }
 
 async function RoastResult({ id }: Props) {
-  await connection();
-  const data = await caller.roast.getById({ id });
+  const rows = await db.select().from(roasts).where(eq(roasts.id, id));
+  const data = rows[0];
   if (!data) notFound();
 
   const score = Number(data.score);
