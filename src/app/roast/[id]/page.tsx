@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import type { BundledLanguage } from "shiki";
 import { codeToHtml } from "shiki";
 
 import { Badge } from "@/components/ui/badge";
-import { DiffLine } from "@/components/ui/diff-line";
 import { ScoreRing } from "@/components/ui/score-ring";
+import { caller } from "@/trpc/server";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -18,83 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const roastData = {
-  score: 3.5,
-  verdict: "needs_serious_help" as const,
-  quote:
-    '"this code looks like it was written during a power outage... in 2005."',
-  language: "javascript",
-  lines: 7,
-  code: `function calculateTotal(items) {
-  var total = 0;
-  for (var i = 0; i < items.length; i++) {
-    total = total + items[i].price;
-  }
-
-  if (total > 100) {
-    console.log("discount applied");
-    total = total * 0.9;
-  }
-
-  // TODO: handle tax calculation
-  // TODO: handle currency conversion
-
-  return total;
-}`,
-  issues: [
-    {
-      variant: "critical" as const,
-      label: "critical",
-      title: "using var instead of const/let",
-      description:
-        "var is function-scoped and leads to hoisting bugs. use const by default, let when reassignment is needed.",
-    },
-    {
-      variant: "warning" as const,
-      label: "warning",
-      title: "imperative loop pattern",
-      description:
-        "for loops are verbose and error-prone. use .reduce() or .map() for cleaner, functional transformations.",
-    },
-    {
-      variant: "good" as const,
-      label: "good",
-      title: "clear naming conventions",
-      description:
-        "calculateTotal and items are descriptive, self-documenting names that communicate intent without comments.",
-    },
-    {
-      variant: "good" as const,
-      label: "good",
-      title: "single responsibility",
-      description:
-        "the function does one thing well — calculates a total. no side effects, no mixed concerns, no hidden complexity.",
-    },
-  ],
-  diff: {
-    filename: "your_code.ts → improved_code.ts",
-    lines: [
-      { type: "context" as const, code: "function calculateTotal(items) {" },
-      { type: "removed" as const, code: "  var total = 0;" },
-      {
-        type: "removed" as const,
-        code: "  for (var i = 0; i < items.length; i++) {",
-      },
-      {
-        type: "removed" as const,
-        code: "    total = total + items[i].price;",
-      },
-      { type: "removed" as const, code: "  }" },
-      { type: "removed" as const, code: "  return total;" },
-      {
-        type: "added" as const,
-        code: "  return items.reduce((sum, item) => sum + item.price, 0);",
-      },
-      { type: "context" as const, code: "}" },
-    ],
-  },
-};
-
 function getVerdictVariant(
   score: number,
 ): "critical" | "warning" | "good" | "info" {
@@ -104,13 +28,17 @@ function getVerdictVariant(
 }
 
 export default async function RoastResultPage({ params }: Props) {
-  const { id: _id } = await params;
-  const data = roastData;
-  const verdictVariant = getVerdictVariant(data.score);
+  const { id } = await params;
+
+  const data = await caller.roast.getById({ id });
+  if (!data) notFound();
+
+  const score = Number(data.score);
+  const verdictVariant = getVerdictVariant(score);
   const codeLines = data.code.split("\n");
 
   const codeHtml = await codeToHtml(data.code, {
-    lang: data.language as BundledLanguage,
+    lang: (data.language as BundledLanguage) ?? "text",
     theme: "vesper",
   });
 
@@ -119,28 +47,19 @@ export default async function RoastResultPage({ params }: Props) {
       <div className="flex flex-col gap-10">
         {/* Score Hero */}
         <section className="flex items-center gap-12">
-          <ScoreRing score={data.score} />
+          <ScoreRing score={score} />
 
           <div className="flex flex-1 flex-col gap-4">
             <Badge variant={verdictVariant}>{`verdict: ${data.verdict}`}</Badge>
 
             <p className="font-mono text-xl leading-[1.5] text-text-primary">
-              {data.quote}
+              {data.roastQuote}
             </p>
 
             <div className="flex items-center gap-4 font-mono text-xs text-text-tertiary">
               <span>lang: {data.language}</span>
               <span>·</span>
-              <span>{data.lines} lines</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="border border-border-primary px-4 py-2 font-mono text-xs text-text-primary transition-colors hover:bg-bg-surface"
-              >
-                $ share_roast
-              </button>
+              <span>{data.lineCount} lines</span>
             </div>
           </div>
         </section>
@@ -199,12 +118,18 @@ export default async function RoastResultPage({ params }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-5">
-            {data.issues.map((issue) => (
+            {(
+              data.issues as Array<{
+                severity: "critical" | "warning" | "good";
+                title: string;
+                description: string;
+              }>
+            ).map((issue) => (
               <div
                 key={issue.title}
                 className="flex flex-col gap-3 border border-border-primary p-5"
               >
-                <Badge variant={issue.variant}>{issue.label}</Badge>
+                <Badge variant={issue.severity}>{issue.severity}</Badge>
                 <span className="font-mono text-[13px] font-medium text-text-primary">
                   {issue.title}
                 </span>
@@ -216,38 +141,30 @@ export default async function RoastResultPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Divider */}
-        <div className="h-px bg-border-primary" />
+        {/* Suggested Fix — only if present */}
+        {data.suggestedFix && (
+          <>
+            {/* Divider */}
+            <div className="h-px bg-border-primary" />
 
-        {/* Suggested Fix */}
-        <section className="flex flex-col gap-6">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-sm font-bold text-accent-green">
-              {"//"}
-            </span>
-            <span className="font-mono text-sm font-bold text-text-primary">
-              suggested_fix
-            </span>
-          </div>
+            <section className="flex flex-col gap-6">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-bold text-accent-green">
+                  {"//"}
+                </span>
+                <span className="font-mono text-sm font-bold text-text-primary">
+                  suggested_fix
+                </span>
+              </div>
 
-          <div className="overflow-hidden border border-border-primary bg-bg-input">
-            {/* Diff Header */}
-            <div className="flex h-10 items-center border-b border-border-primary px-4">
-              <span className="font-mono text-xs font-medium text-text-secondary">
-                {data.diff.filename}
-              </span>
-            </div>
-
-            {/* Diff Body */}
-            <div className="flex flex-col py-1">
-              {data.diff.lines.map((line) => (
-                <DiffLine key={`${line.type}:${line.code}`} type={line.type}>
-                  {line.code}
-                </DiffLine>
-              ))}
-            </div>
-          </div>
-        </section>
+              <div className="overflow-hidden border border-border-primary bg-bg-input">
+                <pre className="p-4 font-mono text-xs leading-relaxed text-text-primary whitespace-pre-wrap">
+                  {data.suggestedFix}
+                </pre>
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </main>
   );
