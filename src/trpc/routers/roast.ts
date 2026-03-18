@@ -9,18 +9,15 @@ import { baseProcedure, createTRPCRouter } from "../init";
 // ── AI output schema ───────────────────────────────────────────────────────
 
 const roastOutputSchema = z.object({
-  score: z.number().min(0).max(10),
+  score: z.number(),
   roastQuote: z.string(),
-  issues: z
-    .array(
-      z.object({
-        severity: z.enum(["critical", "warning", "good"]),
-        title: z.string(),
-        description: z.string(),
-      }),
-    )
-    .min(2)
-    .max(6),
+  issues: z.array(
+    z.object({
+      severity: z.enum(["critical", "warning", "good"]),
+      title: z.string(),
+      description: z.string(),
+    }),
+  ),
   suggestedFix: z.string().nullable(),
   language: z.enum([
     "javascript",
