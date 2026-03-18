@@ -3,8 +3,22 @@ import type { BundledLanguage } from "shiki";
 import { codeToHtml } from "shiki";
 
 import { Badge } from "@/components/ui/badge";
+import { DiffLine } from "@/components/ui/diff-line";
 import { ScoreRing } from "@/components/ui/score-ring";
 import { caller } from "@/trpc/server";
+
+function parseDiff(raw: string) {
+  return raw.split("\n").map((line) => {
+    if (line.startsWith("+"))
+      return { type: "added" as const, code: line.slice(1) };
+    if (line.startsWith("-"))
+      return { type: "removed" as const, code: line.slice(1) };
+    return {
+      type: "context" as const,
+      code: line.startsWith(" ") ? line.slice(1) : line,
+    };
+  });
+}
 
 type Props = {
   id: string;
@@ -147,9 +161,21 @@ async function RoastResult({ id }: Props) {
             </div>
 
             <div className="overflow-hidden border border-border-primary bg-bg-input">
-              <pre className="p-4 font-mono text-xs leading-relaxed text-text-primary whitespace-pre-wrap">
-                {data.suggestedFix}
-              </pre>
+              {/* Diff header */}
+              <div className="flex h-10 items-center border-b border-border-primary px-4">
+                <span className="font-mono text-xs text-text-tertiary">
+                  suggested_fix.diff
+                </span>
+              </div>
+              {/* Diff lines */}
+              <div className="py-1">
+                {parseDiff(data.suggestedFix).map((line, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: diff lines have no stable key
+                  <DiffLine key={i} type={line.type}>
+                    {line.code}
+                  </DiffLine>
+                ))}
+              </div>
             </div>
           </section>
         </>
