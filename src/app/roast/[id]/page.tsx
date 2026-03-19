@@ -14,13 +14,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function RoastResultPage({ params }: Props) {
-  const { id } = await params;
-
+export default function RoastResultPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-5xl px-20 py-10">
       <Suspense fallback={<RoastResultSkeleton />}>
-        <RoastResult id={id} />
+        <RoastResult params={params} />
       </Suspense>
     </main>
   );

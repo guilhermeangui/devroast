@@ -23,7 +23,7 @@ function parseDiff(raw: string) {
 }
 
 type Props = {
-  id: string;
+  params: Promise<{ id: string }>;
 };
 
 function getVerdictVariant(
@@ -34,7 +34,8 @@ function getVerdictVariant(
   return "good";
 }
 
-async function RoastResult({ id }: Props) {
+async function RoastResult({ params }: Props) {
+  const { id } = await params;
   const rows = await db.select().from(roasts).where(eq(roasts.id, id));
   const data = rows[0];
   if (!data) notFound();
