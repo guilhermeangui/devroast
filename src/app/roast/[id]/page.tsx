@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { RoastResult } from "./roast-result";
+import { db } from "@/db";
+import { roasts } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -8,9 +11,37 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+
+  const [roast] = await db
+    .select({
+      score: roasts.score,
+      verdict: roasts.verdict,
+      roastQuote: roasts.roastQuote,
+    })
+    .from(roasts)
+    .where(eq(roasts.id, id))
+    .limit(1);
+
+  if (!roast) {
+    return { title: "Roast Result | devroast" };
+  }
+
+  const title = `${roast.score}/10 — ${roast.verdict} | devroast`;
+  const description = `"${roast.roastQuote}"`;
+
   return {
-    title: "Roast Result | devroast",
-    description: `AI-powered code review result for roast ${id}. See your score, detailed analysis and suggested fixes.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
