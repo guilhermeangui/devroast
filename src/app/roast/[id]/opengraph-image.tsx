@@ -3,20 +3,13 @@ import { ImageResponse } from "@takumi-rs/image-response";
 import { db } from "@/db";
 import { roasts } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { verdictColor } from "@/lib/verdict";
 
 export const runtime = "nodejs";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "devroast score card";
-
-const verdictColor: Record<string, string> = {
-  needs_serious_help: "#ef4444",
-  pretty_bad: "#f97316",
-  could_be_worse: "#eab308",
-  not_terrible: "#3b82f6",
-  surprisingly_good: "#22c55e",
-};
 
 export default async function Image({
   params,
@@ -60,7 +53,7 @@ export default async function Image({
     );
   }
 
-  const dotColor = verdictColor[roast.verdict] ?? "#6b7280";
+  const dotColor = verdictColor[roast.verdict];
   const [whole, decimal] = Number(roast.score).toFixed(1).split(".");
 
   return new ImageResponse(
